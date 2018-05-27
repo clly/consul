@@ -57,11 +57,12 @@ type dnsConfig struct {
 // service discovery endpoints using a DNS interface.
 type DNSServer struct {
 	*dns.Server
-	agent     *Agent
-	config    *dnsConfig
-	domain    string
-	recursors []string
-	logger    *log.Logger
+	agent        *Agent
+	config       *dnsConfig
+	domain       string
+	extraDomains []string
+	recursors    []string
+	logger       *log.Logger
 
 	// disableCompression is the config.DisableCompression flag that can
 	// be safely changed at runtime. It always contains a bool and is
@@ -79,16 +80,24 @@ func NewDNSServer(a *Agent) (*DNSServer, error) {
 		recursors = append(recursors, ra)
 	}
 
+	domains := make([]string, 0, len(a.config.ExtraDNSDomains))
+
 	// Make sure domain is FQDN, make it case insensitive for ServeMux
 	domain := dns.Fqdn(strings.ToLower(a.config.DNSDomain))
 
+	// Make sure the rest of the domains are also FQDN and case insensitive
+	for i := range a.config.ExtraDNSDomains {
+		domains = append(domains, dns.Fqdn(strings.ToLower(a.config.ExtraDNSDomains[i])))
+	}
+
 	dnscfg := GetDNSConfig(a.config)
 	srv := &DNSServer{
-		agent:     a,
-		config:    dnscfg,
-		domain:    domain,
-		logger:    a.logger,
-		recursors: recursors,
+		agent:        a,
+		config:       dnscfg,
+		domain:       domain,
+		extraDomains: domains,
+		logger:       a.logger,
+		recursors:    recursors,
 	}
 	srv.disableCompression.Store(a.config.DNSDisableCompression)
 
@@ -116,6 +125,9 @@ func (d *DNSServer) ListenAndServe(network, addr string, notif func()) error {
 	mux := dns.NewServeMux()
 	mux.HandleFunc("arpa.", d.handlePtr)
 	mux.HandleFunc(d.domain, d.handleQuery)
+	for _, domain := range d.extraDomains {
+		mux.HandleFunc(domain, d.handleQuery)
+	}
 	if len(d.recursors) > 0 {
 		mux.HandleFunc(".", d.handleRecurse)
 	}
@@ -393,7 +405,11 @@ func (d *DNSServer) dispatch(network string, remoteAddr net.Addr, req, resp *dns
 
 	// Get the QName without the domain suffix
 	qName := strings.ToLower(dns.Fqdn(req.Question[0].Name))
-	qName = strings.TrimSuffix(qName, d.domain)
+
+	domains := make([]string, 1, len(d.extraDomains)+1)
+	domains[0] = d.domain
+	domains = append(domains, d.extraDomains...)
+	qName = trimDNSSuffix(qName, domains...)
 
 	// Split into the label parts
 	labels := dns.SplitDomainName(qName)
@@ -1316,4 +1332,15 @@ func (d *DNSServer) resolveCNAME(name string) []dns.RR {
 	}
 	d.logger.Printf("[ERR] dns: all resolvers failed for %v", name)
 	return nil
+}
+
+func trimDNSSuffix(qName string, domains ...string) string {
+	qNameLen := len(qName)
+	for _, d := range domains {
+		q := strings.TrimSuffix(qName, d)
+		if qNameLen != len(q) {
+			return q
+		}
+	}
+	return qName
 }

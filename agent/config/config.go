@@ -180,6 +180,7 @@ type Config struct {
 	EncryptKey                  *string                  `json:"encrypt,omitempty" hcl:"encrypt" mapstructure:"encrypt"`
 	EncryptVerifyIncoming       *bool                    `json:"encrypt_verify_incoming,omitempty" hcl:"encrypt_verify_incoming" mapstructure:"encrypt_verify_incoming"`
 	EncryptVerifyOutgoing       *bool                    `json:"encrypt_verify_outgoing,omitempty" hcl:"encrypt_verify_outgoing" mapstructure:"encrypt_verify_outgoing"`
+	ExtraDNSDomains             []string                 `json:"extra_dns_domains,omitempty" hcl:"extra_dns_domains" mapstructure:"extra_dns_domains"`
 	HTTPConfig                  HTTPConfig               `json:"http_config,omitempty" hcl:"http_config" mapstructure:"http_config"`
 	KeyFile                     *string                  `json:"key_file,omitempty" hcl:"key_file" mapstructure:"key_file"`
 	LeaveOnTerm                 *bool                    `json:"leave_on_terminate,omitempty" hcl:"leave_on_terminate" mapstructure:"leave_on_terminate"`

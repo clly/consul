@@ -757,6 +757,13 @@ type RuntimeConfig struct {
 	// hcl: encrypt_verify_outgoing = (true|false)
 	EncryptVerifyOutgoing bool
 
+	// ExtraDNSDomains are extra DNS domains that consul can handle. Should end with dots
+	// No Defaults
+	//
+	// hcl: domains = string
+	// flag: -extra-domain string -extra-domain string
+	ExtraDNSDomains []string
+
 	// HTTPAddrs contains the list of TCP addresses and UNIX sockets the HTTP
 	// server will bind to. If the HTTP endpoint is disabled (ports.http <= 0)
 	// the list is empty.

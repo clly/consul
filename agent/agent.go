@@ -859,6 +859,10 @@ func (a *Agent) consulConfig() (*consul.Config, error) {
 	base.TLSCipherSuites = a.config.TLSCipherSuites
 	base.TLSPreferServerCipherSuites = a.config.TLSPreferServerCipherSuites
 
+	if len(a.config.ExtraDNSDomains) > 0 {
+		base.ExtraDNSDomains = a.config.ExtraDNSDomains
+	}
+
 	// Setup the user event callback
 	base.UserEventHandler = func(e serf.UserEvent) {
 		select {

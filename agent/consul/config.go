@@ -92,6 +92,9 @@ type Config struct {
 	// Domain is the DNS domain for the records. Defaults to "consul."
 	Domain string
 
+	// ExtraDNSDomains are any extra dns domains that can return requests
+	ExtraDNSDomains []string
+
 	// RaftConfig is the configuration used for Raft in the local DC
 	RaftConfig *raft.Config
 
